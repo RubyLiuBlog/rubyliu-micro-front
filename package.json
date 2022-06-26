@@ -1,0 +1,10 @@
+{
+  "name": "rubyliu-micro-front",
+  "version": "1.0.0",
+  "description": "my first micro front end frame",
+  "main": "index.js",
+  "repository": "https://github.com/RubyLiuBlog/rubyliu-micro-front.git",
+  "author": "liulubingjava@163.com",
+  "license": "MIT",
+  "private": false
+}
