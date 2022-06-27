@@ -2,9 +2,19 @@
   "name": "rubyliu-micro-front",
   "version": "1.0.0",
   "description": "my first micro front end frame",
-  "main": "index.js",
+  "main": "build/bundle.js",
   "repository": "https://github.com/RubyLiuBlog/rubyliu-micro-front.git",
   "author": "liulubingjava@163.com",
   "license": "MIT",
-  "private": false
+  "private": false,
+  "scripts": {
+    "build": "yarn run rollup -c",
+    "start": "yarn run rollup -c -w"
+  },
+  "dependencies": {
+    "@babel/core": "^7.18.5",
+    "@babel/preset-env": "^7.18.2",
+    "rollup": "^2.75.7",
+    "rollup-plugin-babel": "^4.4.0"
+  }
 }
