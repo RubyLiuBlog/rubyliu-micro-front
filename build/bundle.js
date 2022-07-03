@@ -383,26 +383,93 @@ function _asyncToGenerator(fn) {
   };
 }
 
-var importHtmlEntry = function importHtmlEntry(url) {
-  var template = document.createElement('div');
-  /**
-   * TODO: 获取所有的script 标签代码
-   */
-
-  function getExternalScripts() {}
-  /**
-   * TODO: 获取并执行执行所有script 标签代码
-   */
-
-
-  function execScripts() {}
-
-  return {
-    template: template,
-    getExternalScripts: getExternalScripts,
-    execScripts: execScripts
-  };
+var fetchResource = function fetchResource(url) {
+  return fetch(url).then(function (res) {
+    return res.text();
+  });
 };
+
+var importHtmlEntry = /*#__PURE__*/function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(url) {
+    var html, template, getExternalScripts, execScripts, _execScripts;
+
+    return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            _execScripts = function _execScripts3() {
+              _execScripts = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
+                var codes, eval2;
+                return _regeneratorRuntime().wrap(function _callee$(_context) {
+                  while (1) {
+                    switch (_context.prev = _context.next) {
+                      case 0:
+                        _context.next = 2;
+                        return getExternalScripts();
+
+                      case 2:
+                        codes = _context.sent;
+                        eval2 = eval;
+                        codes.forEach(function (code) {
+                          eval2(code);
+                        });
+
+                      case 5:
+                      case "end":
+                        return _context.stop();
+                    }
+                  }
+                }, _callee);
+              }));
+              return _execScripts.apply(this, arguments);
+            };
+
+            execScripts = function _execScripts2() {
+              return _execScripts.apply(this, arguments);
+            };
+
+            getExternalScripts = function _getExternalScripts() {
+              var scripts = template.querySelectorAll('script') || [];
+              return Promise.all(Array.from(scripts).map(function (script) {
+                var src = script.getAttribute('src');
+
+                if (!src) {
+                  return Promise.resolve(script.innerHTML);
+                } else {
+                  return fetchResource(src.startsWith('http') ? src : "".concat(url).concat(src));
+                }
+              }));
+            };
+
+            _context2.next = 5;
+            return fetchResource(url);
+
+          case 5:
+            html = _context2.sent;
+            template = document.createElement('div');
+            template.innerHTML = html;
+            /**
+             * 获取所有的script 标签代码
+             */
+
+            return _context2.abrupt("return", {
+              template: template,
+              getExternalScripts: getExternalScripts,
+              execScripts: execScripts
+            });
+
+          case 9:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2);
+  }));
+
+  return function importHtmlEntry(_x) {
+    return _ref.apply(this, arguments);
+  };
+}();
 
 var appArray = [];
 var getAppArray = function getAppArray() {
@@ -413,42 +480,115 @@ var registerMicroApps = function registerMicroApps(apps) {
   appArray = apps;
 };
 
+var prevRouter = ''; // 上一个路由
+
+var nextRouter = window.location.pathname; //下一个路由
+
+var getPrevRouter = function getPrevRouter() {
+  return prevRouter;
+};
+var getNextRouter = function getNextRouter() {
+  return nextRouter;
+};
+
+var routerListener = function routerListener() {
+  var _window$history = window.history,
+      pushState = _window$history.pushState,
+      replaceState = _window$history.replaceState; // history.go history.back history.forward 使用 popstate
+
+  window.addEventListener('popstate', function () {
+    handleRouter();
+    prevRouter = nextRouter;
+    nextRouter = window.location.pathname;
+  }); // pushState
+
+  window.history.pushState = function () {
+    prevRouter = window.location.pathname;
+
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    pushState.apply(window.history, args);
+    nextRouter = window.location.pathname;
+    handleRouter();
+  }; // replaceState
+
+
+  window.history.replaceState = function () {
+    prevRouter = window.location.pathname;
+
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+
+    replaceState.apply(window.history, args);
+    nextRouter = window.location.pathname;
+    handleRouter();
+  };
+};
+
 var handleRouter = /*#__PURE__*/function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
-    var currentPath, appList, currentApp, html, container;
+    var appList, prevApp, currentApp, container, _yield$importHtmlEntr, template, execScripts, exportApp;
+
     return _regeneratorRuntime().wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
-            currentPath = window.location.pathname; // 2. 匹配子应用
-
+            // 2. 匹配子应用
             appList = getAppArray();
-            currentApp = appList.find(function (item) {
-              return currentPath.startsWith(item.activeRule);
+            prevApp = appList.find(function (item) {
+              return getPrevRouter().startsWith(item.activeRule);
             });
+            currentApp = appList.find(function (item) {
+              return getNextRouter().startsWith(item.activeRule);
+            }); // 卸载上一个应用
 
+            if (!prevApp) {
+              _context.next = 6;
+              break;
+            }
+
+            _context.next = 6;
+            return unmount(prevApp);
+
+          case 6:
             if (currentApp) {
-              _context.next = 5;
+              _context.next = 8;
               break;
             }
 
             return _context.abrupt("return");
 
-          case 5:
-            _context.next = 7;
-            return fetch(currentApp.entry).then(function (res) {
-              return res.text();
-            });
-
-          case 7:
-            html = _context.sent;
+          case 8:
+            // 3. 加载子应用
             container = document.querySelector(currentApp.container);
-            console.log(container);
-            container.innerHTML = html; // 3.1 加载html
+            _context.next = 11;
+            return importHtmlEntry(currentApp.entry);
 
-            importHtmlEntry(currentApp.entry); // 4. 渲染子应用
+          case 11:
+            _yield$importHtmlEntr = _context.sent;
+            template = _yield$importHtmlEntr.template;
+            _yield$importHtmlEntr.getExternalScripts;
+            execScripts = _yield$importHtmlEntr.execScripts;
+            container.appendChild(template); // 配置全局环境变量
 
-          case 12:
+            window.__POWERED_BY_QIANKUN__ = true;
+            window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__ = currentApp.entry;
+            _context.next = 20;
+            return execScripts();
+
+          case 20:
+            exportApp = window[currentApp.name];
+            currentApp.bootstrap = exportApp.bootstrap;
+            currentApp.mount = exportApp.mount;
+            currentApp.unmount = exportApp.unmount; // 4. 渲染子应用
+
+            bootstrap(currentApp);
+            mount(currentApp);
+
+          case 26:
           case "end":
             return _context.stop();
         }
@@ -461,34 +601,100 @@ var handleRouter = /*#__PURE__*/function () {
   };
 }();
 
-var routerListener = function routerListener() {
-  var _window$history = window.history,
-      pushState = _window$history.pushState,
-      replaceState = _window$history.replaceState; // history.go history.back history.forward 使用 popstate
+function bootstrap(_x) {
+  return _bootstrap.apply(this, arguments);
+}
 
-  window.addEventListener('popstate', function () {
-    handleRouter();
-  }); // pushState
+function _bootstrap() {
+  _bootstrap = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(app) {
+    return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            _context2.t0 = app.bootstrap;
 
-  window.history.pushState = function () {
-    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-      args[_key] = arguments[_key];
-    }
+            if (!_context2.t0) {
+              _context2.next = 4;
+              break;
+            }
 
-    pushState.apply(window.history, args);
-    handleRouter();
-  }; // replaceState
+            _context2.next = 4;
+            return app.bootstrap;
 
+          case 4:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2);
+  }));
+  return _bootstrap.apply(this, arguments);
+}
 
-  window.history.replaceState = function () {
-    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-      args[_key2] = arguments[_key2];
-    }
+function mount(_x2) {
+  return _mount.apply(this, arguments);
+}
 
-    replaceState.apply(window.history, args);
-    handleRouter();
-  };
-};
+function _mount() {
+  _mount = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3(app) {
+    return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            _context3.t0 = app.mount;
+
+            if (!_context3.t0) {
+              _context3.next = 4;
+              break;
+            }
+
+            _context3.next = 4;
+            return app.mount({
+              container: document.querySelector(app.container)
+            });
+
+          case 4:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3);
+  }));
+  return _mount.apply(this, arguments);
+}
+
+function unmount(_x3) {
+  return _unmount.apply(this, arguments);
+}
+
+function _unmount() {
+  _unmount = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4(app) {
+    return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+      while (1) {
+        switch (_context4.prev = _context4.next) {
+          case 0:
+            document.querySelector(app.container);
+            _context4.t0 = app.unmount;
+
+            if (!_context4.t0) {
+              _context4.next = 5;
+              break;
+            }
+
+            _context4.next = 5;
+            return app.unmount({
+              container: document.querySelector(app.container)
+            });
+
+          case 5:
+          case "end":
+            return _context4.stop();
+        }
+      }
+    }, _callee4);
+  }));
+  return _unmount.apply(this, arguments);
+}
 
 var start = function start() {
   /**
@@ -501,3 +707,4 @@ var start = function start() {
 
 exports.registerMicroApps = registerMicroApps;
 exports.start = start;
+//# sourceMappingURL=bundle.js.map
